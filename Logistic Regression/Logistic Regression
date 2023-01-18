@@ -1,0 +1,165 @@
+# This code is for logistic regression model
+# It helps to identify how accurately the model will work
+
+# Installs packages Tidyverse  corrplot olsrr and smotefamily
+install.packages("tidyverse")
+install.packages("corrplot")
+install.packages("olsrr")
+install.packages("smotefamily")
+
+# Loads packages Tidyverse  corrplot and olsrr
+library(tidyverse)
+library(corrplot)
+library(olsrr)
+library(smotefamily)
+
+# Set directory
+setwd("C:\\Users\\UAL-Laptop\\Downloads\\Lab_06")
+
+# Read CSV file into a tibble
+mobilePhone <- read_csv("MobilePhoneSubscribers.csv",
+                        col_types='lillnininn',
+                        col_names=TRUE)
+
+# Display tibble mobilePhone
+print(mobilePhone)
+
+# Print the structure of the tibble
+str(mobilePhone)
+
+# Print the summary of the tibble
+summary(mobilePhone)
+
+# Create a function called displayAllHistograms that takes in a
+# tibble parameter and creates histogram
+
+displayAllHistograms <- function(tibbleDataSet) { 
+  tibbleDataSet %>% 
+    keep(is.numeric) %>% 
+    gather() %>%
+    ggplot() + geom_histogram(mapping = aes(x=value, fill=key), 
+                              color = "Black") + 
+    facet_wrap(~ key, scales = "free") +
+    theme_minimal()
+}
+
+# Pass parameter mobilePhone to get histogram plots
+displayAllHistograms(mobilePhone)
+
+# Display correlation matrix
+round(cor(mobilePhone),2)
+
+# Display correlation plot
+corrplot(cor(mobilePhone),
+         method = "number", 
+         type = "lower")
+
+# Remove the dataUsage 
+mobilePhone <- mobilePhone %>%
+  select(-DataUsage)
+
+# Remove the dataPlan 
+mobilePhone <- mobilePhone %>%
+  select(-DataPlan)
+
+# summary of the mobilePhone
+summary(mobilePhone)
+
+# Split data into training and testing using random seed
+set.seed(203)
+
+# Creating vector of 75% randomly sampled rows
+sampleSet <- sample(nrow(mobilePhone),
+                    round(nrow(mobilePhone) * 0.75),
+                    replace = FALSE)
+
+# Records from 75% sample into mobilePhoneTraining
+mobilePhoneTraining <- mobilePhone[sampleSet, ]
+
+# Records from 25% sample into mobilePhoneTesting
+mobilePhoneTesting <- mobilePhone[-sampleSet, ]
+
+# Checking class imbalance issue
+summary(mobilePhoneTraining$CancelledService)
+
+
+# Class Imbalance using SMOTE Technique
+mobilePhoneTrainingSmoted <- 
+  tibble(SMOTE(X = data.frame(mobilePhoneTraining),
+               target = mobilePhoneTraining$CancelledService,
+               dup_size = 3)$data)
+
+# Summary of mobilePhoneTrainingSmoted
+summary(mobilePhoneTrainingSmoted)
+
+# Converting CancelledService and RecentRenewal into logical type
+mobilePhoneTrainingSmoted <- mobilePhoneTrainingSmoted %>%
+  mutate(CancelledService = as.logical(CancelledService),
+         RecentRenewal = as.logical(RecentRenewal))
+
+# Removing class column 
+mobilePhoneTrainingSmoted <- mobilePhoneTrainingSmoted %>%
+  select(-class)
+
+# Summary of mobilePhoneTrainingSmoted
+summary(mobilePhoneTrainingSmoted)
+
+# Checking for class imbalance on mobilePhoneTrainingSmoted
+summary(mobilePhoneTrainingSmoted$CancelledService)
+
+# Geberating logistic model
+mobilePhoneModel <- glm(data = mobilePhoneTrainingSmoted,
+                        family = binomial,
+                        formula = CancelledService ~ .)
+
+# Summary of the model
+summary(mobilePhoneModel)
+
+# Odds ratio for each independent variable
+exp(coef(mobilePhoneModel)["AccountWeeks"])
+exp(coef(mobilePhoneModel)["RecentRenewal"])
+exp(coef(mobilePhoneModel)["CustServCalls"])
+exp(coef(mobilePhoneModel)["AvgCallMinsPerMonth"])
+exp(coef(mobilePhoneModel)["AvgCallsPerMonth"])
+exp(coef(mobilePhoneModel)["MonthlyBill"])
+exp(coef(mobilePhoneModel)["OverageFee"])
+
+# Using model to predict results
+mobilePhonePrediction <- predict(mobilePhoneModel,
+                                 mobilePhoneTesting,
+                                 type = "response")
+
+# Display predicted model
+print(mobilePhonePrediction)
+
+# Treat values to convert in 0's and 1's
+mobilePhonePrediction <- ifelse(mobilePhonePrediction >= 0.5,1,0)
+
+# Display new predicted model
+print(mobilePhonePrediction)
+
+# Generate Confusion Matrix
+mobilePhoneConfusionMatrix <- 
+  table(mobilePhoneTesting$CancelledService,
+        mobilePhonePrediction)
+
+# Display Confusion Matrix
+print(mobilePhoneConfusionMatrix)
+
+# Calculating False Positive Rate
+mobilePhoneConfusionMatrix[1,2]/
+  (mobilePhoneConfusionMatrix[1,2] + 
+     mobilePhoneConfusionMatrix[1,1])
+
+# Calculating False Negative Rate
+mobilePhoneConfusionMatrix[2,1]/
+  (mobilePhoneConfusionMatrix[2,1] + 
+     mobilePhoneConfusionMatrix[2,2])
+
+# Calculating Model Prediction Accuracy
+sum(diag(mobilePhoneConfusionMatrix))/
+  nrow(mobilePhoneTesting)
+
+
+
+
