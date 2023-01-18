@@ -1,11 +1,6 @@
-# Unnati Palande, Bhargavi Murlidhara
-# MIS 545 Section 01
-# Lab07Group20PalandeMurlidhara.R
-# This code is for K-Nearest Neighbors Model
-
 # Installs packages Tidyverse and corrplot 
-# install.packages("tidyverse")
-# install.packages("corrplot")
+install.packages("tidyverse")
+install.packages("corrplot")
 
 # Loads packages Tidyverse  corrplot and class libraries
 library(tidyverse)
