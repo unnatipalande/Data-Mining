@@ -1,6 +1,3 @@
-# Aakanksha Arora, Unnati Palande, Aishwarya Sasane, Edward Ku
-# MIS 545-01
-# ProjectGroup09AroraPalandeSasaneKu.R
 # The following code reads a csv file, displays the statistics and summaries of
 # attributes. Data pre-processing is also done. Some interesting insights of the
 # dataset are calculated. The models created are logistic regression, k-nearest 
